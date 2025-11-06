@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -6,13 +7,17 @@ import {
   Navigate,
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
 import "react-toastify/dist/ReactToastify.css";
 
 import Login from "./components/login";
 import SignUp from "./components/register";
 import { auth } from "./components/firebase";
+
 import Dashboard from "./pages/dashboard/dashboard";
+import Profile from "./pages/dashboard/profile";
+import Devices from "./pages/dashboard/devices";
+
+import DashboardLayout from "./components/dashboard/DashboardLayout"; // NEW
 
 function App() {
   const [user, setUser] = useState(null);
@@ -38,6 +43,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-white">
         <Routes>
+          {/* PUBLIC ROUTES */}
           <Route
             path="/"
             element={user ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -50,9 +56,43 @@ function App() {
             path="/register"
             element={user ? <Navigate to="/dashboard" replace /> : <SignUp />}
           />
+
+          {/* PROTECTED ROUTES – WITH LAYOUT */}
           <Route
             path="/dashboard"
-            element={user ? <Dashboard /> : <Navigate to="/login" replace />}
+            element={
+              user ? (
+                <DashboardLayout>
+                  <Dashboard />
+                </DashboardLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              user ? (
+                <DashboardLayout>
+                  <Profile />
+                </DashboardLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/devices"
+            element={
+              user ? (
+                <DashboardLayout>
+                  <Devices />
+                </DashboardLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
           />
         </Routes>
 
