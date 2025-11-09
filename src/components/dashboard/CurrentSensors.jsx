@@ -41,7 +41,6 @@ export default function CurrentSensors() {
         bgGradient="bg-[#FF7E5F]/90 to-[#FD3A69]/80"
         textColor="text-white"
       />
-
       {/* Humidity */}
       <Card
         title="Humidity"
@@ -51,7 +50,6 @@ export default function CurrentSensors() {
         bgGradient="bg-[#7C3BED]/80"
         textColor="text-white"
       />
-
       {/* Motion */}
       <Card
         title="Motion"
@@ -65,15 +63,14 @@ export default function CurrentSensors() {
         }
         textColor="text-white"
       />
-
       {/* Gas */}
       <Card
         title="Gas"
-        value={latest.gas ? "Detected" : "Safe"}
+        value={latest.gas > 250 ? "Detected" : "Safe"}
         unit=""
         icon={AlertCircle}
         bgGradient={
-          latest.gas
+          latest.gas > 250
             ? "bg-gradient-to-br from-orange-500 to-red-500"
             : "bg-gradient-to-br from-emerald-500 to-teal-600"
         }
