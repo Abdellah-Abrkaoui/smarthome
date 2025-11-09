@@ -33,6 +33,9 @@ export default function CurrentSensors() {
   const gasValue = latest.gas ?? 0;
   const gasDetected = gasValue > 2000; // Adjust threshold based on real readings
 
+  const rainValue = latest.rainDetected ?? 0;
+  const rainValueDetected = rainValue > 100; // Adjust threshold based on real readings
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {/* Temperature */}
@@ -76,6 +79,21 @@ export default function CurrentSensors() {
           gasDetected
             ? "bg-gradient-to-br from-orange-500 to-red-500"
             : "bg-gradient-to-br from-emerald-500 to-teal-600"
+        }
+        textColor="text-white"
+      />
+
+      <Card
+        title="Rain"
+        value={
+          rainValueDetected ? `Detected (${rainValue})` : `Safe (${rainValue})`
+        }
+        unit=""
+        icon={Droplets} // you can use another icon if you want
+        bgGradient={
+          rainValueDetected
+            ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+            : "bg-gradient-to-br from-gray-400 to-gray-600"
         }
         textColor="text-white"
       />
