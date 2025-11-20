@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "author": "Anass Baadi",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 4.84, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -13.2,
+      "left": -53.8,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": -13.2,
+      "left": 177,
+      "attrs": { "color": "limegreen", "flip": "1" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -172.5,
+      "left": 23.4,
+      "attrs": { "temperature": "-20.4", "humidity": "56.5" }
+    },
+    {
+      "type": "wokwi-gas-sensor",
+      "id": "gas1",
+      "top": -148,
+      "left": 146.9,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": -159.2,
+      "left": -170.58,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo1",
+      "top": 179.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "led1:C", "black", [ "h0" ] ],
+    [ "led1:A", "esp:14", "green", [ "v0" ] ],
+    [ "led2:A", "esp:16", "green", [ "v0" ] ],
+    [ "esp:GND.3", "led2:C", "black", [ "h0" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v0", "h-38.4" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "v0", "h38.4" ] ],
+    [ "dht1:SDA", "esp:22", "green", [ "v9.6", "h67.3", "v57.6" ] ],
+    [ "gas1:GND", "esp:GND.2", "black", [ "v12.5", "h-60.9" ] ],
+    [ "gas1:VCC", "esp:5V", "red", [ "v2.9", "h-156.8", "v230.4" ] ],
+    [ "pir1:VCC", "esp:5V", "red", [ "v0" ] ],
+    [ "pir1:OUT", "esp:25", "green", [ "v0" ] ],
+    [ "pir1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "servo1:GND", "esp:GND.1", "black", [ "h38.4", "v-105.6" ] ],
+    [ "servo1:V+", "esp:5V", "red", [ "h0" ] ],
+    [ "gas1:DOUT", "esp:4", "green", [ "v0" ] ],
+    [ "servo1:PWM", "esp:15", "green", [ "h124.8", "v-57.8" ] ]
+  ],
+  "dependencies": {}
+}
