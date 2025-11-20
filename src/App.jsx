@@ -1,5 +1,4 @@
-// src/App.jsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,25 +10,17 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Login from "./components/login";
 import SignUp from "./components/register";
-import { auth } from "./components/firebase";
 
 import Dashboard from "./pages/dashboard/dashboard";
 import Profile from "./pages/dashboard/profile";
 
-import DashboardLayout from "./components/dashboard/DashboardLayout"; // NEW
+import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Spinner from "./components/Spinner";
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { useAuth } from "./contexts/AuthContext";
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+function App() {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -48,16 +39,18 @@ function App() {
             path="/"
             element={user ? <Navigate to="/dashboard" replace /> : <Login />}
           />
+
           <Route
             path="/login"
             element={user ? <Navigate to="/dashboard" replace /> : <Login />}
           />
+
           <Route
             path="/register"
             element={user ? <Navigate to="/dashboard" replace /> : <SignUp />}
           />
 
-          {/* PROTECTED ROUTES – WITH LAYOUT */}
+          {/* PROTECTED ROUTES */}
           <Route
             path="/dashboard"
             element={
@@ -70,6 +63,7 @@ function App() {
               )
             }
           />
+
           <Route
             path="/profile"
             element={

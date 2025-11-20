@@ -1,22 +1,17 @@
+// src/components/Header.jsx
 import React, { useState, useEffect } from "react";
-import { auth } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { useUser } from "@supabase/auth-helpers-react";
 import { Sun } from "lucide-react";
 
 const Header = () => {
-  const [user, setUser] = useState(null);
+  const user = useUser(); // This replaces all Firebase onAuthStateChanged
   const [weather, setWeather] = useState({
     temp: "--",
     description: "Loading...",
   });
 
+  // Weather fetch — exactly the same as before
   useEffect(() => {
-    // Listen to Firebase auth
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    // Fetch weather using .env API key
     const fetchWeather = async () => {
       try {
         const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
@@ -45,10 +40,14 @@ const Header = () => {
     };
 
     fetchWeather();
-    return () => unsubscribe();
   }, []);
 
-  const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
+  // Name logic updated for Supabase (from your 'users' table or Google)
+  const displayName = user?.user_metadata?.first_name
+    ? `${user.user_metadata.first_name} ${
+        user.user_metadata.last_name || ""
+      }`.trim()
+    : user?.email?.split("@")[0] || "User";
 
   return (
     <header className="bg-white shadow-sm p-6 mb-6 flex items-center justify-between">

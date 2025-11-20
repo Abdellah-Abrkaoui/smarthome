@@ -1,9 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../firebase";
-import { signOut } from "firebase/auth";
-import { Home, Settings, User2Icon } from "lucide-react";
-import { LucideDivideCircle, LogOutIcon } from "lucide-react";
+import { Home, User2Icon } from "lucide-react";
+import { LogOutIcon } from "lucide-react";
+import { supabase } from "../../supabase/supabaseClient";
 
 const navItems = [
   { to: "/dashboard", icon: Home, label: "Dashboard" },
@@ -15,7 +14,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -55,7 +54,9 @@ const Sidebar = () => {
           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all group"
         >
           <LogOutIcon className="w-5 h-5" />
-          <span className="hidden lg:block font-medium">Logout</span>
+          <span className="hidden lg:block font-medium cursor-pointer">
+            Logout
+          </span>
         </button>
       </div>
     </aside>

@@ -1,88 +1,126 @@
-import { signInWithEmailAndPassword } from "firebase/auth";
+// Login.jsx
 import React, { useState } from "react";
-import { auth } from "./firebase";
 import { toast } from "react-toastify";
-import SignInwithGoogle from "./signInWIthGoogle";
+import { useSupabaseClient } from "@supabase/auth-helpers-react"; // This is the right way!
+import { useNavigate } from "react-router-dom";
+import SignInWithGoogle from "./SignInWithGoogle";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const supabase = useSupabaseClient(); // Correct way inside components
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success("User logged in Successfully", { position: "top-center" });
-      window.location.href = "/dashboard";
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) throw error;
+
+      toast.success("Logged in successfully!", { position: "top-center" });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      toast.error(error.message, { position: "bottom-center" });
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to log in", {
+        position: "bottom-center",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-md">
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-5"
+          className="bg-white rounded-xl shadow-2xl p-8 space-y-6"
         >
-          <h3 className="text-2xl font-bold text-center text-gray-800">
-            Login
+          <h3 className="text-3xl font-bold text-center text-gray-800">
+            Welcome Back
           </h3>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
             </label>
             <input
               type="email"
-              placeholder="Enter email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               required
+              disabled={loading}
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
             <input
               type="password"
-              placeholder="Enter password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               required
+              disabled={loading}
             />
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg"
+            disabled={loading}
+            className={`w-full py-3.5 font-semibold text-white rounded-lg transition ${
+              loading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+            }`}
           >
-            Submit
+            {loading ? "Signing in..." : "Sign In"}
           </button>
 
           {/* Register Link */}
           <p className="text-center text-sm text-gray-600">
-            New user?{" "}
-            <a href="/register" className="text-blue-600 font-medium">
-              Register Here
+            Don’t have an account?{" "}
+            <a
+              href="/register"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Register here
             </a>
           </p>
 
           {/* Divider */}
-          <div className="text-center text-sm text-gray-500 my-4">
-            — Or continue with —
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-300"></div>
+            <span className="px-4 text-sm text-gray-500 bg-white">
+              Or continue with
+            </span>
+            <div className="flex-1 border-t border-gray-300"></div>
           </div>
 
           {/* Google Sign-In */}
-          <SignInwithGoogle />
+          <SignInWithGoogle disabled={loading} />
         </form>
       </div>
     </div>

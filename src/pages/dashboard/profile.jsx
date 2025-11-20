@@ -1,49 +1,80 @@
+// src/pages/dashboard/profile.jsx
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../../components/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import Spinner from "../../components/Spinner";
 
 function Profile() {
-  const [userAuth, setUserAuth] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const user = useUser();
+  const supabase = useSupabaseClient();
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        setUserAuth(null);
-        setUserData(null);
-        setLoading(false);
-        return;
-      }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setUserAuth(currentUser);
+    async function loadProfile() {
+      // Step 1: Try to fetch existing profile from 'users' table
+      const { data, error } = await supabase
+        .from("users")
+        .select("first_name, last_name, photo, email")
+        .eq("id", user.id)
+        .single();
 
-        // Fix 1: Collection name is "Users" (capital U), not "users"
-        const userRef = doc(db, "Users", currentUser.uid);
-        const snap = await getDoc(userRef);
+      // Step 2: If no profile exists (PGRST116 = no rows returned)
+      if (!data || (error && error.code === "PGRST116")) {
+        const meta = user.user_metadata || {}; // Correct key: user_metadata
 
-        if (snap.exists()) {
-          const data = snap.data();
-          setUserData(data);
-          console.log("Firestore user data:", data);
-        } else {
-          console.log("No user document found in Firestore (Users collection)");
-          setUserData(null);
+        const firstName =
+          meta.first_name || meta.given_name || meta.name?.split(" ")[0] || "";
+
+        const lastName =
+          meta.last_name ||
+          meta.family_name ||
+          meta.name?.split(" ").slice(1).join(" ") ||
+          "";
+
+        const photo = meta.picture || meta.avatar_url || null;
+
+        // Insert new profile with correct column names
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert({
+            id: user.id,
+            email: user.email,
+            first_name: firstName,
+            last_name: lastName,
+            photo: photo,
+          })
+          .single();
+
+        if (insertError && insertError.code !== "23505") {
+          // 23505 = duplicate key (already exists)
+          console.error("Failed to create profile:", insertError);
         }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-        setError("Failed to load profile data");
-      } finally {
-        setLoading(false);
-      }
-    });
 
-    return () => unsubscribe();
-  }, []);
+        // Use the freshly created/fallback data
+        setProfile({
+          first_name: firstName,
+          last_name: lastName,
+          photo,
+          email: user.email,
+        });
+      } else if (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
+      } else {
+        // Successfully fetched from DB
+        setProfile(data);
+      }
+
+      setLoading(false);
+    }
+
+    loadProfile();
+  }, [user, supabase]);
 
   if (loading) {
     return (
@@ -53,63 +84,81 @@ function Profile() {
     );
   }
 
-  if (error) {
-    return <div className="p-6 text-red-600 text-center">{error}</div>;
-  }
-
-  if (!userAuth) {
+  if (!user) {
     return (
-      <div className="p-6 text-center">Please log in to view your profile.</div>
+      <div className="p-10 text-center text-xl text-gray-600">
+        Please log in to view your profile.
+      </div>
     );
   }
 
-  // Construct full name with fallbacks
-  const firstName = userData?.firstName || "";
-  const lastName = userData?.lastName || "";
+  // Final display values (fallback chain)
+  const firstName = profile?.first_name || "User";
+  const lastName = profile?.last_name || "";
   const fullName =
-    `${firstName} ${lastName}`.trim() || userAuth.displayName || "User";
-
-  // Fix 2: Field is "photo", not "profileImgUrl"
-  const photoUrl =
-    userData?.photo || userAuth?.photoURL || "/default-avatar.png";
+    `${firstName} ${lastName}`.trim() || user.email.split("@")[0];
+  const photoUrl = profile?.photo || "/avatar.avif";
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-center">My Profile</h1>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">
+        My Profile
+      </h1>
 
-      <div className="bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
-        {/* Profile Photo */}
-        <div className="flex justify-center mb-6">
-          <img
-            src={photoUrl}
-            alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow-md"
-            onError={(e) => {
-              e.target.src = "/default-avatar.png"; // fallback if image fails
-            }}
-          />
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-purple-500 to-blue-600 p-10 text-center">
+          <div className="relative inline-block">
+            <img
+              src={photoUrl}
+              alt="Profile"
+              className="w-40 h-40 rounded-full object-cover border-8 border-white shadow-2xl"
+              onError={(e) => (e.target.src = "/default-avatar.png")}
+            />
+            {user.confirmed_at && (
+              <div className="absolute bottom-4 right-4 bg-green-500 text-white p-2 rounded-full text-xs font-bold">
+                Verified
+              </div>
+            )}
+          </div>
+          <h2 className="text-3xl font-bold text-white mt-6">{fullName}</h2>
+          <p className="text-white/80 text-lg">{user.email}</p>
         </div>
 
-        {/* User Info */}
-        <div className="space-y-4 text-lg">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-800">{fullName}</h2>
-            <p className="text-gray-500">{userAuth.email}</p>
+        {/* Details */}
+        <div className="p-10 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 font-medium">First Name</p>
+              <p className="text-2xl font-semibold text-gray-800 mt-1">
+                {firstName || "—"}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <p className="text-sm text-gray-500 font-medium">Last Name</p>
+              <p className="text-2xl font-semibold text-gray-800 mt-1">
+                {lastName || "—"}
+              </p>
+            </div>
           </div>
-
-          <hr className="my-6" />
-
-          <div className="space-y-3">
-            <p>
-              <strong className="text-gray-700">Name:</strong>{" "}
-              {firstName || "—"}
+          <div className="bg-gray-50 rounded-2xl p-6">
+            <p className="text-sm text-gray-500 font-medium">Email Address</p>
+            <p className="text-xl font-medium text-gray-800 mt-1">
+              {user.email}
             </p>
-
-            <p>
-              <strong className="text-gray-700">Email:</strong> {userAuth.email}
+          </div>
+          <div className="bg-gray-50 rounded-2xl p-6">
+            <p className="text-sm text-gray-500 font-medium">User ID (UID)</p>
+            <p className="text-sm font-mono text-gray-700 mt-2 break-all bg-white p-3 rounded-lg">
+              {user.id}
             </p>
-            <p className="text-sm text-gray-500 font-mono break-all">
-              <strong>User ID:</strong> {userAuth.uid}
+          </div>
+          <div className="text-center pt-6">
+            <p className="text-sm text-gray-500">
+              Logged in via:{" "}
+              <span className="font-medium capitalize">
+                {user.app_metadata?.provider || "email"}
+              </span>
             </p>
           </div>
         </div>
