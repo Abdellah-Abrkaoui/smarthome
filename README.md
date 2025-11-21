@@ -1,14 +1,26 @@
-# 🌐 Smart Home Project - [🔗 Live Project](https://smart-homee.netlify.app/)
+# 🌐 Smart Home Project - [Live Project](https://lightyellow-hyena-946061.hostingersite.com)
 
-**IoT | Cloud Computing | Networking**
+**IoT | Cloud Computing | Networking | Real-time Systems**
 
-A full-stack **Smart Home Dashboard** built with **React (Vite)** and **Firebase**, allowing real-time monitoring and control of smart devices from anywhere.
+A modern full-stack **Smart Home Dashboard** built with **React + Vite** and powered by **Supabase** – featuring real-time sensor monitoring, secure authentication, and remote device control from anywhere in the world.
 
 ---
 
-## 🚀 Getting Started
+## Features
 
-### 1️⃣ Clone & Install
+- Secure Authentication (Email/Password + Google Sign-In)
+- Real-time Data Sync via Supabase Realtime
+- Temperature, Humidity, Motion & Gas sensors
+- Remote control: LEDs, Servo Motor
+- Beautiful responsive dashboard with live charts
+- Built with React, Vite, Tailwind CSS
+- ESP32 firmware (PlatformIO) with secure MQTT over TLS
+
+---
+
+## Getting Started
+
+### 1. Clone & Install Frontend Dependencies
 
 ```bash
 git clone https://github.com/Abdellah-Abrkaoui/smarthome.git
@@ -16,102 +28,79 @@ cd smarthome
 npm install
 ```
 
-### 2️⃣ Firebase Setup
+### 2. Supabase Setup
 
-Go to the Firebase Console
-and create a new project.
-
-✅ Enable required services:
-
-Authentication: Email/Password + Google Sign-In
-
-Firestore Database: Start in test mode
-
-⚙️ Add Firebase Config
-
-Create a new file: src/firebase.js
+- Go to https://supabase.com and create a new project
+- Wait for your project to be ready (~2 minutes)
+- Go to Settings → API and copy:URL and anon public key
+- Create .env file in the project root:
 
 ```bash
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
-};
-
-const app = initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
-### 3️⃣ Run Development Server
+### 3. Initialize Supabase Client
+
+- Your src/supabaseClient.js should look like this:
 
 ```bash
-npm run dev
+import { createClient } from '@supabase/supabase-js'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 ```
 
-Then open 👉 http://localhost:5173
+```bash
+Tip: Enable Email/Password and Google OAuth in Supabase → Authentication → Providers
+```
 
+### 4. Run Development Server
 
-### ESP32 Setup (PlatformIO + secrets.ini)
+- npm run dev
+  Open → http://localhost:5173
 
-We store WiFi & MQTT credentials in a separate secrets.ini file
+### 5. ESP32 Setup (PlatformIO + secrets.ini)
 
-Create secrets.ini:
-```ini
-[env:esp32dev]
+- Keep your credentials safe using secrets.ini:
+- Create secrets.ini:
+
+```bash
+ini[env:esp32dev]
 build_flags =
-    -D WIFI_SSID=\"YourWiFi\"
-    -D WIFI_PASS=\"YourPassword\"
-    -D MQTT_SERVER=\"your-mqtt-server\"
-    -D MQTT_USER=\"your-user\"
-    -D MQTT_PASS=\"your-pass\"
-    -D MQTT_PORT=8883
+    -D WIFI_SSID_ENV=\"YourWiFiName\"
+    -D WIFI_PASS_ENV=\"YourWiFiPassword\"
+    -D MQTT_SERVER=\"your-mqtt-broker.com\"
+    -D MQTT_PORT_ENV=8883
+    -D MQTT_USER_ENV=\"your-mqtt-user\"
+    -D MQTT_PASS_ENV=\"your-mqtt-password\"
 ```
 
 In platformio.ini add:
-```ini
-extra_configs = secrets.ini
-```
-
-➡️ This loads your private values safely without pushing them to GitHub.
-
-### 🖥️ Wokwi Simulation in VSCode
-
-You can simulate the ESP32 hardware directly in VSCode using the **Wokwi extension**. Install the Wokwi plugin, open your project, and run the `.pio` PlatformIO code in a virtual ESP32 environment. This allows testing sensors, MQTT, and actuators before uploading to a real device.
-
-
-### 🌍 Deployment
-
-This project is hosted on Netlify.
-🔗 Live Demo: https://smart-homee.netlify.app
-
-If you’re using React Router, add this file in your public/ folder:
-
-📄 \_redirects
 
 ```bash
-/*    /index.html   200
+iniextra_configs = secrets.ini
 ```
 
-### ⚙️ Features
+This keeps secrets out of GitHub!
 
-🔐 Firebase Authentication (Email + Google Sign-In)
+### 6. Wokwi Simulation in VS Code
 
-🌡️ Real-time sensor monitoring (Temperature, Humidity, etc.)
+- Test your ESP32 code without hardware!
+- Install the Wokwi VS Code extension
+- Add wokwi.toml to your project root (example provided in repo)
+- Press F1 → Wokwi: Start Simulator
 
-💡 Device control (LEDs, Servo Motor, etc.)
+### 7. Deployment
 
-📊 Interactive dashboard with charts
+- Currently hosted on Hostinger
+- [Live Demo](https://lightyellow-hyena-946061.hostingersite.com)
 
-☁️ Cloud-based IoT architecture
+### 8. Contributing
 
-📱 Responsive UI with Tailwind CSS
+- Contributions are welcome! Feel free to:
+
+1. Open issues
+2. Submit pull requests
+3. Improve UI/UX
+4. Add new sensors or features
