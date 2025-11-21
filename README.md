@@ -60,6 +60,35 @@ npm run dev
 
 Then open 👉 http://localhost:5173
 
+
+### ESP32 Setup (PlatformIO + secrets.ini)
+
+We store WiFi & MQTT credentials in a separate secrets.ini file
+
+Create secrets.ini:
+```ini
+[env:esp32dev]
+build_flags =
+    -D WIFI_SSID=\"YourWiFi\"
+    -D WIFI_PASS=\"YourPassword\"
+    -D MQTT_SERVER=\"your-mqtt-server\"
+    -D MQTT_USER=\"your-user\"
+    -D MQTT_PASS=\"your-pass\"
+    -D MQTT_PORT=8883
+```
+
+In platformio.ini add:
+```ini
+extra_configs = secrets.ini
+```
+
+➡️ This loads your private values safely without pushing them to GitHub.
+
+### 🖥️ Wokwi Simulation in VSCode
+
+You can simulate the ESP32 hardware directly in VSCode using the **Wokwi extension**. Install the Wokwi plugin, open your project, and run the `.pio` PlatformIO code in a virtual ESP32 environment. This allows testing sensors, MQTT, and actuators before uploading to a real device.
+
+
 ### 🌍 Deployment
 
 This project is hosted on Netlify.
