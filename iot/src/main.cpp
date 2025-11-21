@@ -10,7 +10,7 @@ const char* SSID = WIFI_SSID_ENV;
 const char* PASSWORD = WIFI_PASS_ENV;
 
 const uint32_t WIFI_RECONNECT_DELAY = 5000;
-const char* MQTT_SERVER = MQTT_SERVER;
+const char* MQTT_SERVER = MQTT_SERVER_ENV;
 const int MQTT_PORT = MQTT_PORT_ENV;
 const char* MQTT_USER = MQTT_USER_ENV;
 const char* MQTT_PASSWORD = MQTT_PASS_ENV;
