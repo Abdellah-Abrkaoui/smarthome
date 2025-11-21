@@ -5,14 +5,15 @@
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 
-const char* SSID = "Wokwi-GUEST";
-const char* PASSWORD = "";
+// ==================== CONFIG ====================
+const char* SSID = WIFI_SSID_ENV;
+const char* PASSWORD = WIFI_PASS_ENV;
 
 const uint32_t WIFI_RECONNECT_DELAY = 5000;
-const char* MQTT_SERVER = "02cdc5d9d4ac404fb86415fafc88aad9.s1.eu.hivemq.cloud";
-const int MQTT_PORT = 8883;
-const char* MQTT_USER = "fsaCluster";
-const char* MQTT_PASSWORD = "ClusterPass123";
+const char* MQTT_SERVER = MQTT_SERVER;
+const int MQTT_PORT = MQTT_PORT_ENV;
+const char* MQTT_USER = MQTT_USER_ENV;
+const char* MQTT_PASSWORD = MQTT_PASS_ENV;
 const uint16_t MQTT_KEEP_ALIVE = 600;
 const uint32_t MQTT_RECONNECT_BASE_DELAY = 2000;
 
@@ -35,7 +36,7 @@ constexpr const char* DEVICE_BLUE = "blue";
 constexpr const char* DEVICE_GREEN = "green";
 constexpr const char* DEVICE_SERVO = "servo";
 
-// Root CA
+// Root CA (as plain const char* — safer for setCACert)
 static const char* ROOT_CA = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
@@ -88,6 +89,7 @@ bool mqttConnected = false;
 
 int currentServoAngle = 0;
 
+// -------------------- FORWARD DECLARATIONS --------------------
 void handleWiFi();
 void handleMQTT();
 bool connectMQTT();
@@ -101,6 +103,7 @@ void sendChatMessage(const String& msg);
 void mqttCallback(char* topic, byte* payload, unsigned int len);
 void logJson(const char* prefix, const char* topic, const JsonDocument& doc);
 
+// ==================== SETUP & LOOP ====================
 void setup() {
   Serial.begin(115200);
   while (!Serial) delay(10);
@@ -119,6 +122,7 @@ void setup() {
 
   dhtSensor.setup(DHT_PIN, DHTesp::DHT22);
 
+  // Configure TLS root CA for WiFiClientSecure
   wifiClient.setCACert(ROOT_CA);
 
   clientId = "ESP32-Node-" + String(random(0xffff), HEX);
@@ -130,6 +134,7 @@ void loop() {
   handleWiFi();
   handleMQTT();
 
+  // Process network client
   if (mqttConnected) mqttClient.loop();
 
   // App tasks
@@ -138,6 +143,8 @@ void loop() {
   publishStatusIfDue();
 }
 
+// ==================== WIFI ====================
+void handleWiFi() {
   if (wifiConnected && WiFi.status() == WL_CONNECTED) return;
 
   static unsigned long lastAttempt = 0;
@@ -166,6 +173,7 @@ void loop() {
   }
 }
 
+// ==================== MQTT ====================
 void handleMQTT() {
   if (!wifiConnected) {
     mqttConnected = false;
@@ -195,6 +203,7 @@ bool connectMQTT() {
   mqttClient.setKeepAlive(MQTT_KEEP_ALIVE);
   mqttClient.setCallback(mqttCallback);
 
+  // For TLS, PubSubClient accepts a WiFiClient (our wifiClient is WiFiClientSecure)
   bool ok = mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD);
   if (ok) {
     Serial.println(" Connected!");
@@ -206,6 +215,7 @@ bool connectMQTT() {
   }
 }
 
+// ==================== LOGGING / JSON HELPERS ====================
 void logJson(const char* prefix, const char* topic, const JsonDocument& doc) {
   String payload;
   serializeJson(doc, payload);
@@ -263,6 +273,7 @@ void publishSystemMetrics() {
   mqttClient.publish(TOPIC_STATS, doc.as<String>().c_str());
 }
 
+// ==================== SENSORS & PUBLISH ====================
 void publishSensorDataIfDue() {
   if (!mqttConnected) return;
   unsigned long now = millis();
@@ -284,6 +295,8 @@ void publishSensorDataIfDue() {
   doc["gas"] = digitalRead(GAS_PIN);
   doc["blue"]  = (digitalRead(LED_BLUE_PIN) == HIGH);
   doc["green"] = (digitalRead(LED_GREEN_PIN) == HIGH);
+  doc["rainDetected"] = 30; // only  for test
+  doc["fan"] = true; // only for test
 
   logJson("Sent -> ", TOPIC_DATA, doc);
   mqttClient.publish(TOPIC_DATA, doc.as<String>().c_str());
@@ -292,6 +305,7 @@ void publishSensorDataIfDue() {
   publishSystemMetrics();
 }
 
+// ==================== SERIAL CHAT ====================
 void handleSerialInput() {
   while (Serial.available()) {
     char c = Serial.read();
@@ -316,6 +330,7 @@ void sendChatMessage(const String& msg) {
   mqttClient.publish(TOPIC_CHAT, doc.as<String>().c_str());
 }
 
+// ==================== MQTT CALLBACK ====================
 void mqttCallback(char* topic, byte* payload, unsigned int len) {
   Serial.print("Recv <- ");
   Serial.print(topic);
