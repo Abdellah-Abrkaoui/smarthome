@@ -1,7 +1,9 @@
-const BASE_URL = "https://team-jelixe-jelixe9415-86fd3327.flowfuse.cloud/api";
+const BASE_URL =
+  "https://team-camone-fantastu-camone7344-fa457885.flowfuse.cloud/api";
 
 export async function getSensorData() {
   const res = await fetch(`${BASE_URL}/data`);
+  console.log(res);
   return res.json();
 }
 
